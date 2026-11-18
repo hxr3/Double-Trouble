@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Double Trouble</title>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Fredoka:wght@500;600;700&display=swap');
+      :root{
+        --bg:#11152b;--panel:#1c2342;--panel2:#252e53;--line:rgba(255,255,255,.1);
+        --text:#f8f9ff;--muted:#aab4d3;--pink:#ff6488;--cyan:#5ce1e6;--gold:#ffd166;
+        --green:#42d6a4;--shadow:0 18px 50px rgba(3,7,22,.38)
+      }
+      *{box-sizing:border-box}
+      body{margin:0;min-height:100vh;padding:24px;background:radial-gradient(ellipse at 50% -20%,#35477f 0%,#1b2346 38%,#101429 78%);color:var(--text);font-family:Nunito,system-ui,sans-serif;display:flex;align-items:center;justify-content:center;overflow-x:hidden}
+      body:before,body:after{content:"";position:fixed;border-radius:50%;filter:blur(2px);pointer-events:none;opacity:.22;z-index:-1}
+      body:before{width:340px;height:340px;background:#ff6488;top:-180px;left:-90px}
+      body:after{width:420px;height:420px;background:#5ce1e6;right:-220px;bottom:-240px}
+      .screen{display:none;width:min(1100px,100%);min-height:min(760px,calc(100vh - 48px));padding:30px;background:linear-gradient(145deg,rgba(31,40,76,.97),rgba(20,27,55,.98));border:1px solid rgba(255,255,255,.12);border-radius:28px;box-shadow:var(--shadow);flex-direction:column;gap:22px;position:relative;overflow:hidden}
+      .screen:before{content:"";position:absolute;inset:0 0 auto;height:5px;background:linear-gradient(90deg,#5ce1e6,#8d8bff,#ff6488,#ffd166)}
+      .screen.active{display:flex;animation:screenIn .55s cubic-bezier(.2,.8,.2,1) both}
+      @keyframes screenIn{from{opacity:0;transform:translateY(14px) scale(.985)}to{opacity:1;transform:none}}
+      #setupScreen{justify-content:center;align-items:center;text-align:center;padding:54px 38px}
+      .brand-mark{width:76px;height:76px;border-radius:24px;margin:0 auto 16px;display:grid;place-items:center;font:700 38px Fredoka;background:linear-gradient(145deg,#ff7897,#ff4e76);box-shadow:0 10px 26px #ff64884a, inset 0 2px 0 #ffffff75;transform:rotate(-7deg)}
+      h1{font:700 clamp(36px,6vw,58px)/1 Fredoka,sans-serif;letter-spacing:1px;margin:0;color:#fff;text-shadow:0 5px 0 rgba(0,0,0,.14)}
+      .subtitle{color:var(--muted);font-size:13px;font-weight:900;letter-spacing:3px;margin-top:12px}
+      .setup-copy{color:#d5dcf4;font-size:15px;margin:18px 0 4px}
+      .cards-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin:24px 0 8px;width:min(850px,100%)}
+      .diff-card{background:linear-gradient(160deg,#2b3765,#20294d);border:1px solid var(--line);border-radius:19px;padding:20px 16px;text-align:left;cursor:pointer;transition:transform .22s,border-color .22s,box-shadow .22s;min-height:132px;position:relative;overflow:hidden}
+      .diff-card:before{content:"";position:absolute;width:100px;height:100px;border-radius:50%;right:-45px;top:-45px;background:var(--glow,#5ce1e6);opacity:.12}
+      .diff-card:hover{transform:translateY(-5px);border-color:#ffffff65;box-shadow:0 12px 24px #05091e66}
+      .diff-card.selected{border:2px solid var(--pink);background:linear-gradient(160deg,#493254,#292b55);box-shadow:0 0 0 4px #ff648825,0 12px 28px #080c2366}
+      .diff-icon{font-size:25px;margin-bottom:12px;display:block}
+      .diff-card h3{margin:0 0 7px;font:600 20px Fredoka;color:white;display:flex;justify-content:space-between;align-items:center}
+      .diff-card.selected h3{color:#ff9bb3}
+      .diff-card p{margin:0;font-size:12px;line-height:1.5;color:var(--muted)}
+      .btn{background:linear-gradient(180deg,#5ce1c0,#2cbd9b);color:#123b3b;border:0;padding:13px 24px;font:900 13px Nunito,sans-serif;letter-spacing:1px;border-radius:14px;cursor:pointer;box-shadow:0 5px 0 #188b78,0 9px 20px #0003;transition:transform .15s,filter .15s,box-shadow .15s}
+      .btn:hover:not(:disabled){filter:brightness(1.08);transform:translateY(-2px);box-shadow:0 7px 0 #188b78,0 13px 24px #0004}
+      .btn:active:not(:disabled){transform:translateY(3px);box-shadow:0 2px 0 #188b78}
+      .btn:disabled{background:#454e70;color:#9ba5c7;box-shadow:none;cursor:not-allowed}
+      .btn-red{background:linear-gradient(180deg,#ff8aa4,#f04e78);color:white;box-shadow:0 5px 0 #b52e57,0 10px 22px #f04e7833;width:min(430px,100%);font-size:15px;padding:16px}
+      .btn-red:hover:not(:disabled){box-shadow:0 7px 0 #b52e57,0 14px 26px #f04e7844}
+      .setup-foot{font-size:11px;color:#8490b6;letter-spacing:1px;margin-top:16px}
+      .top-bar{background:linear-gradient(110deg,#2a365f,#222c50);padding:15px 20px;border-radius:18px;display:flex;justify-content:space-between;align-items:center;border:1px solid var(--line);gap:14px;box-shadow:0 7px 20px #05091e33}
+      .brand-small{font:600 21px Fredoka;display:flex;align-items:center;gap:10px}
+      .brand-small span{width:34px;height:34px;border-radius:11px;background:linear-gradient(145deg,#ff7897,#ff4e76);display:grid;place-items:center}
+      .match-info{display:flex;align-items:center;gap:12px;color:#e5eaff;font-size:13px;font-weight:900}
+      .score-pill{background:#151d3b;border:1px solid var(--line);border-radius:12px;padding:9px 14px}
+      .round-dots{display:flex;gap:5px}.round-dot{width:9px;height:9px;border-radius:50%;background:#596487}.round-dot.won{background:var(--gold);box-shadow:0 0 9px #ffd16688}
+      .game-heading{display:flex;justify-content:space-between;align-items:end;padding:0 4px}
+      .game-heading h2{font:600 25px Fredoka;margin:0}.game-heading p{margin:5px 0 0;color:var(--muted);font-size:12px}
+      .turn-chip{font-size:11px;font-weight:900;letter-spacing:1px;padding:8px 12px;border-radius:20px;background:#183f48;color:#77f1d0;border:1px solid #5ce1e644}
+      .board-container{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:17px;flex:1;min-height:320px;margin:0}
+      .pile-card{animation:pileAppear .38s cubic-bezier(.2,.8,.2,1) both;background:linear-gradient(160deg,#29365f,#20294c);border:1px solid var(--line);border-radius:21px;display:flex;flex-direction:column;align-items:center;padding:18px 12px 12px;cursor:pointer;position:relative;overflow:hidden;transition:transform .2s,border-color .2s,box-shadow .2s}
+      @keyframes pileAppear{from{opacity:.55;transform:translateY(9px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
+      .pile-card:after{content:"";position:absolute;inset:0;background:radial-gradient(ellipse at 50% 0%,var(--glow,#5ce1e6),transparent 65%);opacity:.08;pointer-events:none}
+      .pile-card:hover{transform:translateY(-3px);border-color:#ffffff55}
+      .pile-card.selected{border:2px solid var(--glow);box-shadow:0 0 0 4px color-mix(in srgb,var(--glow) 18%,transparent),0 12px 28px #05091e55;transform:translateY(-3px)}
+      .pile-card.empty{opacity:.48;filter:saturate(.5)}
+      .pile-title{font:600 19px Fredoka;margin:2px 0 4px}
+      .pile-count{font-size:11px;color:var(--muted);font-weight:800;letter-spacing:.8px;margin-bottom:7px}
+      canvas.board-canvas{width:min(100%,260px);height:auto;min-height:180px;aspect-ratio:220/240;display:block;cursor:pointer;position:relative;z-index:1;flex:0 0 auto}
+      .pile-hint{font-size:10px;color:#8490b6;margin-top:auto;letter-spacing:.6px}
+      .action-area{display:flex;justify-content:center;align-items:center;gap:12px;padding-top:2px}
+      #actionBtn{min-width:210px}
+      .status-label{text-align:center;font-size:12px;color:#aeb9d9;font-weight:800;min-height:18px}
+      .sound-btn{border:1px solid var(--line);background:#151d3b;color:#cbd5f5;border-radius:11px;padding:9px 11px;cursor:pointer;font:800 11px Nunito}
+      .modal-overlay{display:none;position:fixed;inset:0;background:rgba(6,9,25,.78);backdrop-filter:blur(10px);justify-content:center;align-items:center;padding:20px;z-index:10}
+      .modal-overlay.show{display:flex;animation:fadeIn .25s ease}
+      @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+      .modal-box{background:linear-gradient(145deg,#303b68,#1c2549);padding:34px 28px;border-radius:25px;text-align:center;border:1px solid #ffffff24;width:min(390px,100%);box-shadow:0 25px 70px #0008;animation:popIn .4s cubic-bezier(.2,1.5,.5,1)}
+      @keyframes popIn{from{opacity:0;transform:scale(.75)}to{opacity:1;transform:scale(1)}}
+      .modal-burst{font-size:42px;margin-bottom:8px;animation:bounce 1.2s infinite}
+      @keyframes bounce{50%{transform:translateY(-7px) rotate(5deg)}}
+      .modal-box h3{font:700 29px Fredoka;color:#ff8da8;margin:0 0 10px}
+      .modal-box p{font-size:13px;color:#d5def9;line-height:1.6;margin:0 0 24px}
+      .economy-row{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:4px}
+      .coin-pill{display:inline-flex;align-items:center;gap:7px;padding:9px 13px;border-radius:13px;background:linear-gradient(145deg,#4b3e32,#302b3d);border:1px solid #ffd16655;color:#ffe39a;font-weight:900;font-size:13px;box-shadow:inset 0 1px #ffffff16}
+      .coin-icon{font-size:17px;filter:drop-shadow(0 2px 2px #0005)}
+      .shop-btn{border:1px solid #ffd16666;background:linear-gradient(180deg,#ffe39a,#f2b84b);color:#52350b;padding:10px 15px;border-radius:12px;font:900 12px Nunito;cursor:pointer;box-shadow:0 4px 0 #a66c20;transition:.15s}
+      .shop-btn:hover{transform:translateY(-2px);filter:brightness(1.06)}
+      .top-economy{display:flex;align-items:center;gap:8px}
+      .shop-overlay{display:none;position:fixed;inset:0;background:#060919cc;backdrop-filter:blur(10px);justify-content:center;align-items:center;padding:18px;z-index:20}
+      .shop-overlay.show{display:flex;animation:fadeIn .2s ease}
+      .shop-panel{width:min(760px,100%);max-height:min(780px,90vh);overflow:auto;background:linear-gradient(145deg,#303b68,#1b2448);border:1px solid #ffffff25;border-radius:24px;padding:25px;box-shadow:0 25px 70px #0009}
+      .shop-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:8px}
+      .shop-head h2{font:700 29px Fredoka;margin:0}
+      .shop-sub{color:var(--muted);font-size:12px;margin:0 0 18px}
+      .skin-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+      .skin-card{background:linear-gradient(160deg,#27345e,#20294b);border:1px solid var(--line);border-radius:17px;padding:15px;text-align:center;min-width:0}
+      .skin-preview{height:76px;display:flex;align-items:center;justify-content:center;gap:7px;margin-bottom:9px}
+      .skin-orb{width:29px;height:29px;border-radius:50%;box-shadow:inset -5px -6px 8px #0004,inset 4px 4px 6px #ffffff8c,0 5px 8px #0005;border:1px solid #ffffff45}
+      .skin-card h3{font:600 17px Fredoka;margin:5px 0}
+      .skin-card p{font-size:11px;color:var(--muted);margin:0 0 12px;min-height:16px}
+      .skin-action{width:100%;padding:9px 8px;border:0;border-radius:10px;background:#5ce1c0;color:#123b3b;font:900 11px Nunito;cursor:pointer}
+      .skin-action:disabled{background:#465174;color:#aab4d3;cursor:default}
+      .shop-close{border:1px solid var(--line);background:#1a2344;color:#eaf0ff;border-radius:10px;padding:8px 12px;font-weight:900;cursor:pointer}
+      .reward-line{color:#ffe39a;font-weight:900}
+      @media(max-width:560px){.skin-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.shop-panel{padding:18px}.top-economy{width:100%;justify-content:flex-end}}
+      @media(max-width:760px){body{padding:12px;align-items:flex-start}.screen{min-height:calc(100vh - 24px);padding:20px;border-radius:20px;gap:15px}#setupScreen{padding:36px 18px}.cards-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.diff-card{min-height:112px;padding:15px}.board-container{gap:9px;min-height:260px}.pile-card{padding:14px 5px 9px;border-radius:15px}.pile-title{font-size:16px}.top-bar{padding:12px}.brand-small{font-size:17px}.match-info{gap:6px;font-size:11px}.score-pill{padding:8px}.game-heading h2{font-size:21px}}
+      @media(max-width:480px){.screen{padding:15px}.board-container{grid-template-columns:1fr;min-height:0}.pile-card{min-height:160px;display:grid;grid-template-columns:1fr 1.2fr;grid-template-rows:auto auto 1fr;justify-items:center;padding:10px 14px}.pile-title,.pile-count{grid-column:1}.pile-title{align-self:end}.pile-count{align-self:start}.board-canvas{grid-column:2;grid-row:1/4;width:min(100%,190px)!important}.pile-hint{display:none}.top-bar{flex-wrap:wrap}.match-info{margin-left:auto}.game-heading{align-items:center}.turn-chip{font-size:9px}.action-area{padding:5px 0}}
+      @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+    </style>
+</head>
+<body>
+
+    <!-- SETUP SCREEN -->
+    <div id="setupScreen" class="screen active">
+        <div class="brand-mark">2×</div>
+        <div>
+            <h1>DOUBLE TROUBLE</h1>
+            <div class="subtitle">THINK FAST. PLAY SMART.</div>
+            <p class="setup-copy">Choose how tough you want the challenge to be.</p>
+        </div>
+        <div class="economy-row">
+            <div class="coin-pill"><span class="coin-icon">🪙</span><span id="setupCoinCount">0</span> COINS</div>
+            <button class="shop-btn" type="button" onclick="openShop()">✦ BALL SHOP</button>
+        </div>
+        <div class="cards-grid" id="diffGrid"></div>
+        <button class="btn btn-red" onclick="startGame()">LET'S PLAY <span aria-hidden="true">➜</span></button>
+        <div class="setup-foot">A STRATEGY GAME • BEST OF THREE ROUNDS</div>
+    </div>
+
+    <!-- GAME SCREEN -->
+    <div id="gameScreen" class="screen">
+        <div class="top-bar">
+            <div class="brand-small"><span>2×</span> DOUBLE TROUBLE</div>
+            <div class="match-info">
+                <div class="score-pill" id="scoreLabel">YOU 0 - 0 CPU</div>
+                <div class="round-dots" aria-label="Rounds played">
+                    <span class="round-dot"></span>
+                    <span class="round-dot"></span>
+                    <span class="round-dot"></span>
+                </div>
+                <div class="top-economy">
+                    <div class="coin-pill"><span class="coin-icon">🪙</span><span id="gameCoinCount">0</span></div>
+                    <button class="shop-btn" type="button" onclick="openShop()">SHOP</button>
+                </div>
+                <button class="sound-btn" id="soundBtn" type="button" onclick="toggleSound()">♫ SOUND ON</button>
+            </div>
+        </div>
+
+        <div class="game-heading">
+            <div>
+                <h2>Choose your move</h2>
+                <p>Pick a pile, then select the last ball you want to remove.</p>
+            </div>
+            <div class="turn-chip" id="turnChip">● YOUR TURN</div>
+        </div>
+
+        <div class="board-container" id="boardContainer" aria-label="Game board"></div>
+
+        <div class="action-area">
+            <button id="actionBtn" class="btn" disabled onclick="confirmMove()">CONFIRM MOVE</button>
+        </div>
+        <div id="statusLabel" class="status-label" role="status" aria-live="polite">Your turn. Select a pile and choose your move.</div>
+    </div>
+
+    <!-- MODAL POPUP -->
+    <div id="modalOverlay" class="modal-overlay">
+        <div class="modal-box">
+            <div class="modal-burst" id="modalBurst">🏆</div>
+            <h3 id="modalTitle">ROUND SECURED</h3>
+            <p id="modalBody"></p>
+            <button class="btn" onclick="closeModal()">CONTINUE</button>
+        </div>
+    </div>
+
+    <div id="shopOverlay" class="shop-overlay" role="dialog" aria-modal="true" aria-labelledby="shopTitle">
+        <div class="shop-panel">
+            <div class="shop-head">
+                <h2 id="shopTitle">Ball Skin Shop</h2>
+                <button class="shop-close" type="button" onclick="closeShop()">✕ CLOSE</button>
+            </div>
+            <p class="shop-sub">Earn coins by winning matches. Buy a look, then equip it for every pile.</p>
+            <div class="economy-row" style="justify-content:flex-start;margin:0 0 16px">
+                <div class="coin-pill"><span class="coin-icon">🪙</span><span id="shopCoinCount">0</span> COINS</div>
+            </div>
+            <div class="skin-grid" id="skinGrid"></div>
+        </div>
+    </div>
+
+    <script>
+        let piles = [3, 7, 5];
+        let playerTurn = true;
+        let playerWins = 0;
+        let computerWins = 0;
+        let roundsToWin = 2;
+        let selectedDifficulty = "Unbeatable";
+        let selectedPile = -1;
+        let selectedAmount = 1;
+        let isAnimating = false;
+        let ballCoordsMap = []; // Stores interactive bounding areas for canvas balls
+
+        // Coins and cosmetics persist between browser sessions on this device.
+        const COIN_KEY = "doubleTroubleCoins_v1";
+        const OWNED_KEY = "doubleTroubleOwnedSkins_v1";
+        const EQUIPPED_KEY = "doubleTroubleEquippedSkin_v1";
+        const skins = [
+            { id:"classic", name:"Classic", price:0, desc:"The original glossy colors.", colors:[["#d5ffe7","#27c98a","#08764f"],["#fff8ca","#f6bb32","#b87512"],["#ffd8e1","#f34d72","#a91e50"]] },
+            { id:"ocean", name:"Ocean", price:120, desc:"Cool aqua and deep blue.", colors:[["#d4fff8","#48e0d0","#087d88"],["#d9f1ff","#58b8f5","#185baf"],["#e5e0ff","#8d83f5","#44349c"]] },
+            { id:"candy", name:"Candy", price:220, desc:"Sweet pastel colors.", colors:[["#ffe4f3","#ff91c8","#b83f91"],["#fff1c9","#ffc66e","#bd6d38"],["#e7e2ff","#a99aff","#5e50bd"]] },
+            { id:"galaxy", name:"Galaxy", price:350, desc:"A cosmic purple glow.", colors:[["#f0ddff","#b36bff","#5425a5"],["#d6e4ff","#668dff","#263e9c"],["#ffd9f5","#ed68c8","#8d287c"]] },
+            { id:"gold", name:"Royal Gold", price:500, desc:"A shiny champion finish.", colors:[["#fff5bd","#ffd447","#a96b0b"],["#fff0a8","#eeb52d","#98600c"],["#fff2cf","#e8a94c","#96501c"]] },
+            { id:"neon", name:"Neon", price:700, desc:"Bright arcade energy.", colors:[["#e1ffd8","#8cff45","#368b12"],["#d7ffff","#35f4ef","#087caa"],["#ffe0f5","#ff4cdb","#a51d91"]] }
+        ];
+        let coins = loadNumber(COIN_KEY, 0);
+        let ownedSkins = loadArray(OWNED_KEY, ["classic"]);
+        if (!ownedSkins.includes("classic")) ownedSkins.unshift("classic");
+        let equippedSkin = "classic";
+        try { equippedSkin = localStorage.getItem(EQUIPPED_KEY) || "classic"; } catch(e) {}
+        let matchRewarded = false;
+        const matchRewards = { Easy:50, Medium:100, Hard:175, Unbeatable:300 };
+        function loadNumber(key, fallback){ try { const n=Number(localStorage.getItem(key)); return Number.isFinite(n)&&n>=0?n:fallback; } catch(e){ return fallback; } }
+        function loadArray(key, fallback){ try { const v=JSON.parse(localStorage.getItem(key)); return Array.isArray(v)?v:fallback; } catch(e){ return fallback; } }
+        function saveEconomy(){ try { localStorage.setItem(COIN_KEY,String(coins)); localStorage.setItem(OWNED_KEY,JSON.stringify(ownedSkins)); localStorage.setItem(EQUIPPED_KEY,equippedSkin); } catch(e){} }
+        function updateCoinDisplay(){ ["setupCoinCount","gameCoinCount","shopCoinCount"].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=coins.toLocaleString();}); }
+        function awardMatchCoins(){
+            if(matchRewarded || playerWins<=computerWins) return 0;
+            matchRewarded=true;
+            const reward=matchRewards[selectedDifficulty]||50;
+            coins+=reward; saveEconomy(); updateCoinDisplay();
+            return reward;
+        }
+        function openShop(){ renderShop(); document.getElementById("shopOverlay").classList.add("show"); }
+        function closeShop(){ document.getElementById("shopOverlay").classList.remove("show"); }
+        function renderShop(){
+            updateCoinDisplay();
+            const grid=document.getElementById("skinGrid"); if(!grid)return;
+            grid.innerHTML="";
+            skins.forEach(skin=>{
+                const owned=ownedSkins.includes(skin.id), equipped=equippedSkin===skin.id;
+                const card=document.createElement("div"); card.className="skin-card";
+                const preview=document.createElement("div"); preview.className="skin-preview";
+                skin.colors.forEach(c=>{const orb=document.createElement("span");orb.className="skin-orb";orb.style.background=`radial-gradient(circle at 30% 25%,${c[0]},${c[1]} 58%,${c[2]})`;preview.appendChild(orb);});
+                const title=document.createElement("h3");title.textContent=skin.name;
+                const desc=document.createElement("p");desc.textContent=skin.desc;
+                const button=document.createElement("button");button.className="skin-action";
+                if(equipped){button.textContent="EQUIPPED";button.disabled=true;}
+                else if(owned){button.textContent="EQUIP SKIN";button.onclick=()=>{equippedSkin=skin.id;saveEconomy();renderShop();renderBoard();};}
+                else if(coins>=skin.price){button.textContent=`BUY · ${skin.price} 🪙`;button.onclick=()=>buySkin(skin.id);}
+                else{button.textContent=`${skin.price} 🪙`;button.disabled=true;}
+                card.append(preview,title,desc,button);grid.appendChild(card);
+            });
+        }
+        function buySkin(id){
+            const skin=skins.find(s=>s.id===id); if(!skin||ownedSkins.includes(id)||coins<skin.price)return;
+            coins-=skin.price;ownedSkins.push(id);equippedSkin=id;saveEconomy();updateCoinDisplay();renderShop();renderBoard();playTone(880,.12,"triangle");
+        }
+
+        const difficulties = [
+            { name: "Easy", desc: "A relaxed skirmish." },
+            { name: "Medium", desc: "Balanced AI logic." },
+            { name: "Hard", desc: "High strategic pressure." },
+            { name: "Unbeatable", desc: "Flawless Nim calculation." }
+        ];
+
+        function initSetup() {
+            const grid = document.getElementById("diffGrid");
+            grid.innerHTML = "";
+            const icons = { Easy: "🌱", Medium: "⚡", Hard: "🔥", Unbeatable: "👑" };
+            const glows = { Easy: "#42d6a4", Medium: "#ffd166", Hard: "#ff8b68", Unbeatable: "#b69cff" };
+            difficulties.forEach(d => {
+                const card = document.createElement("div");
+                card.className = `diff-card ${selectedDifficulty === d.name ? 'selected' : ''}`;
+                card.style.setProperty("--glow", glows[d.name]);
+                card.innerHTML = `<span class="diff-icon">${icons[d.name]}</span><h3>${d.name} ${selectedDifficulty === d.name ? '<span style="font-size:9px;color:#ff9bb3">✓</span>' : ''}</h3><p>${d.desc}</p>`;
+                card.onclick = () => {
+                    selectedDifficulty = d.name;
+                    initSetup();
+                };
+                grid.appendChild(card);
+            });
+        }
+
+        function startGame() {
+            document.getElementById("setupScreen").classList.remove("active");
+            document.getElementById("gameScreen").classList.add("active");
+            initNewMatch();
+        }
+
+        function initNewMatch() {
+            matchRewarded = false;
+            updateCoinDisplay();
+            playerWins = 0;
+            computerWins = 0;
+            updateScoreDisplay();
+            startNewRound();
+        }
+
+        function startNewRound() {
+            piles = [3, 7, 5];
+            selectedPile = -1;
+            selectedAmount = 1;
+            isAnimating = false;
+            playerTurn = true;
+            document.getElementById("statusLabel").innerText = "Select a pile, then tap a ball to choose how many to remove.";
+            document.getElementById("turnChip").innerText = "● YOUR TURN";
+            document.getElementById("turnChip").style.background = "#183f48";
+            document.getElementById("turnChip").style.color = "#77f1d0";
+            document.getElementById("actionBtn").innerText = "Confirm Move";
+            document.getElementById("actionBtn").disabled = true;
+            renderBoard();
+        }
+
+        function renderBoard() {
+            const container = document.getElementById("boardContainer");
+            container.innerHTML = "";
+            ballCoordsMap = [];
+
+            const sectorNames = ["Green Pile", "Yellow Pile", "Red Pile"];
+            const sectorColors = ["#2ecc71", "#f1c40f", "#ff4655"];
+
+            for (let i = 0; i < 3; i++) {
+                const pileIndex = i;
+                ballCoordsMap[pileIndex] = [];
+
+                const card = document.createElement("div");
+                card.className = `pile-card ${selectedPile === i ? 'selected' : ''} ${piles[i] === 0 ? 'empty' : ''}`;
+                card.style.setProperty("--glow", sectorColors[i]);
+                card.onclick = (e) => {
+                    if (playerTurn && !isAnimating && piles[pileIndex] > 0 && e.target.tagName !== 'CANVAS') {
+                        selectedPile = pileIndex;
+                        selectedAmount = 1;
+                        document.getElementById("actionBtn").disabled = false;
+                        document.getElementById("statusLabel").innerText = `Selected ${sectorNames[pileIndex]}. Click balls to adjust selection.`;
+                        renderBoard();
+                    }
+                };
+
+                const title = document.createElement("div");
+                title.className = "pile-title";
+                title.style.color = sectorColors[i];
+                title.innerText = sectorNames[i];
+                card.appendChild(title);
+
+                const countLbl = document.createElement("div");
+                countLbl.className = "pile-count";
+                countLbl.innerText = `${piles[i]} items left`;
+                card.appendChild(countLbl);
+
+                // Create clean single canvas per pile matching reference image grid/pyramid style layout
+                const canvas = document.createElement("canvas");
+                canvas.width = 220;
+                canvas.height = 240;
+                canvas.className = "board-canvas";
+
+                const ctx = canvas.getContext("2d");
+                drawPileCanvas(ctx, pileIndex, sectorColors[i]);
+
+                // Handle precise click detection across the unified canvas layout
+                canvas.onclick = (e) => {
+                    if (!playerTurn || isAnimating) return;
+                    const rect = canvas.getBoundingClientRect();
+                    const mouseX = (e.clientX - rect.left) * (canvas.width / rect.width);
+                    const mouseY = (e.clientY - rect.top) * (canvas.height / rect.height); 
+
+                    for (let ball of ballCoordsMap[pileIndex]) {
+                        let dist = Math.hypot(mouseX - ball.x, mouseY - ball.y);
+                        if (dist <= ball.radius) {
+                            selectedPile = pileIndex;
+                            selectedAmount = piles[pileIndex] - ball.ballIndex;
+                            document.getElementById("actionBtn").disabled = false;
+                            document.getElementById("statusLabel").innerText = `Selected ${selectedAmount} balls. Confirm your move.`;
+                            renderBoard();
+                            playTone(620, .05, "sine");
+                            break;
+                        }
+                    }
+                };
+
+                card.appendChild(canvas);
+                const hint = document.createElement("div");
+                hint.className = "pile-hint";
+                hint.innerText = piles[i] === 0 ? "CLEARED" : (selectedPile === i ? "PILE SELECTED" : "TAP TO SELECT");
+                card.appendChild(hint);
+                card.style.animationDelay = `${i * 65}ms`;
+                container.appendChild(card);
+            }
+        }
+
+        function drawPileCanvas(ctx, pileIndex, baseColor) {
+            ctx.clearRect(0, 0, 220, 240);
+
+            let totalItems = piles[pileIndex];
+            let currentBallIndex = 0;
+            let rowCapacity = 1;
+            let rowY = 35;
+            let radius = 18;
+
+            while (currentBallIndex < totalItems) {
+                let itemsInThisRow = Math.min(rowCapacity, totalItems - currentBallIndex);
+                let rowWidth = itemsInThisRow * (radius * 2 + 10) - 10;
+                let startX = (220 - rowWidth) / 2 + radius;
+
+                for (let r = 0; r < itemsInThisRow; r++) {
+                    let ballIndex = currentBallIndex++;
+                    let cx = startX + r * (radius * 2 + 10);
+                    let cy = rowY;
+
+                    // Save coordinates for click mapping
+                    ballCoordsMap[pileIndex].push({ x: cx, y: cy, radius: radius, ballIndex: ballIndex });
+
+                    // Long drop shadow matching reference style
+                    ctx.beginPath();
+                    ctx.arc(cx + 3, cy + 6, radius, 0, Math.PI * 2);
+                    ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
+                    ctx.fill();
+
+                    // 3D Spherical Radial Gradient Shading matching reference image
+                    let grad = ctx.createRadialGradient(cx - 5, cy - 5, 3, cx, cy, radius);
+                    if (baseColor === "#2ecc71") { grad.addColorStop(0, "#82e0aa"); grad.addColorStop(0.6, "#2ecc71"); grad.addColorStop(1, "#1e8449"); }
+                    else if (baseColor === "#f1c40f") { grad.addColorStop(0, "#f9e79f"); grad.addColorStop(0.6, "#f1c40f"); grad.addColorStop(1, "#b7950b"); }
+                    else { grad.addColorStop(0, "#f1948a"); grad.addColorStop(0.6, "#ff4655"); grad.addColorStop(1, "#b03a2e"); }
+
+                    ctx.beginPath();
+                    ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+                    ctx.fillStyle = grad;
+                    ctx.fill();
+
+                    // Thick solid white highlight ring matching reference image chain selection look
+                    let isSelected = (selectedPile === pileIndex && ballIndex >= piles[pileIndex] - selectedAmount);
+                    if (isSelected) {
+                        ctx.beginPath();
+                        ctx.arc(cx, cy, radius + 2, 0, Math.PI * 2);
+                        ctx.strokeStyle = "#ffffff";
+                        ctx.lineWidth = 3.5;
+                        ctx.stroke();
+                    }
+                }
+                rowY += 45;
+                rowCapacity++;
+            }
+        }
+
+        function confirmMove() {
+            if (selectedPile === -1 || piles[selectedPile] === 0 || isAnimating) return;
+            isAnimating = true;
+            document.getElementById("actionBtn").disabled = true;
+
+            piles[selectedPile] -= selectedAmount;
+            selectedPile = -1;
+            selectedAmount = 1;
+            renderBoard();
+
+            if (checkRoundOver(true)) return;
+
+            playerTurn = false;
+            document.getElementById("statusLabel").innerText = "The opponent is planning a move...";
+            document.getElementById("turnChip").innerText = "● CPU THINKING";
+            document.getElementById("turnChip").style.background = "#3a315c";
+            document.getElementById("turnChip").style.color = "#c4a8ff";
+            document.getElementById("actionBtn").innerText = "OPPONENT TURN";
+            
+            setTimeout(executeComputerTurn, 1000);
+        }
+
+        function executeComputerTurn() {
+            let targetPile = 0;
+            let removeAmount = 1;
+
+            for (let i = 0; i < 3; i++) {
+                if (piles[i] > 0) { targetPile = i; break; }
+            }
+
+            if (selectedDifficulty === "Easy") {
+                do { targetPile = Math.floor(Math.random() * 3); } while (piles[targetPile] === 0);
+                removeAmount = Math.floor(Math.random() * piles[targetPile]) + 1;
+            } else if (selectedDifficulty === "Medium") {
+                if (Math.random() < 0.4) {
+                    targetPile = getNimSumPile();
+                    removeAmount = calculateNimSumRemoval(targetPile);
+                } else {
+                    do { targetPile = Math.floor(Math.random() * 3); } while (piles[targetPile] === 0);
+                    removeAmount = Math.floor(Math.random() * piles[targetPile]) + 1;
+                }
+            } else if (selectedDifficulty === "Hard") {
+                if (Math.random() < 0.8) {
+                    targetPile = getNimSumPile();
+                    removeAmount = calculateNimSumRemoval(targetPile);
+                } else {
+                    do { targetPile = Math.floor(Math.random() * 3); } while (piles[targetPile] === 0);
+                    removeAmount = Math.floor(Math.random() * piles[targetPile]) + 1;
+                }
+            } else {
+                targetPile = getNimSumPile();
+                removeAmount = calculateNimSumRemoval(targetPile);
+            }
+
+            piles[targetPile] -= removeAmount;
+            isAnimating = false;
+            renderBoard();
+
+            if (checkRoundOver(false)) return;
+
+            playerTurn = true;
+            document.getElementById("statusLabel").innerText = "Your turn. Select a pile and choose your move.";
+            document.getElementById("turnChip").innerText = "● YOUR TURN";
+            document.getElementById("turnChip").style.background = "#183f48";
+            document.getElementById("turnChip").style.color = "#77f1d0";
+            document.getElementById("actionBtn").innerText = "CONFIRM MOVE";
+            document.getElementById("actionBtn").disabled = true;
+        }
+
+        function getNimSumPile() {
+            let nimSum = piles[0] ^ piles[1] ^ piles[2];
+            if (nimSum !== 0) {
+                for (let i = 0; i < 3; i++) {
+                    let target = piles[i] ^ nimSum;
+                    if (target < piles[i]) return i;
+                }
+            }
+            for (let i = 0; i < 3; i++) { if (piles[i] > 0) return i; }
+            return 0;
+        }
+
+        function calculateNimSumRemoval(pileIndex) {
+            let nimSum = piles[0] ^ piles[1] ^ piles[2];
+            if (nimSum !== 0) {
+                let target = piles[pileIndex] ^ nimSum;
+                if (target < piles[pileIndex]) return piles[pileIndex] - target;
+            }
+            return 1;
+        }
+
+        function checkRoundOver(playerJustMoved) {
+            if (piles[0] === 0 && piles[1] === 0 && piles[2] === 0) {
+                if (playerJustMoved) playerWins++; else computerWins++;
+                updateScoreDisplay();
+
+                if (playerWins === roundsToWin || computerWins === roundsToWin) {
+                    let msg = playerWins > computerWins ? "YOU WON THE MATCH!" : "OPPONENT WON THE MATCH!";
+                    const reward = awardMatchCoins();
+                    const rewardText = reward ? `\n\n+${reward} COINS EARNED! (${selectedDifficulty} difficulty)` : "\n\nNo coins this time. Win the match to earn a reward!";
+                    showModal(msg, `Final Score: You ${playerWins} - ${computerWins} Opponent${rewardText}`, true);
+                } else {
+                    let msg = playerJustMoved ? "ROUND SECURED" : "ROUND LOST";
+                    showModal(msg, "Advancing to next round.", false);
+                }
+                return true;
+            }
+            return false;
+        }
+
+        let isMatchOverCallback = false;
+        function showModal(title, body, isMatchEnd) {
+            document.getElementById("modalTitle").innerText = title;
+            document.getElementById("modalBody").innerText = body;
+            document.getElementById("modalBurst").innerText = title.includes("WON") || title.includes("SECURED") ? "🏆" : "💥";
+            document.getElementById("modalOverlay").classList.add("show");
+            isMatchOverCallback = isMatchEnd;
+        }
+
+        function closeModal() {
+            document.getElementById("modalOverlay").classList.remove("show");
+            if (isMatchOverCallback) {
+                document.getElementById("gameScreen").classList.remove("active");
+                document.getElementById("setupScreen").classList.add("active");
+            } else {
+                startNewRound();
+            }
+        }
+
+        function updateScoreDisplay() {
+            document.getElementById("scoreLabel").innerText = `YOU ${playerWins}  -  ${computerWins} CPU`;
+            const dots = document.querySelectorAll(".round-dot");
+            dots.forEach((dot, i) => dot.classList.toggle("won", i < playerWins + computerWins));
+        }
+
+
+        // Polished ball rendering and lightweight game feedback.
+        let soundEnabled = true;
+        let audioContext = null;
+        const pileAnimations = {};
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            const soundButton = document.getElementById("soundBtn");
+            if (soundButton) soundButton.innerText = soundEnabled ? "♫ SOUND ON" : "♫ SOUND OFF";
+            if (soundEnabled) playTone(660, 0.07, "sine");
+        }
+        function playTone(freq, duration = 0.08, type = "sine") {
+            if (!soundEnabled) return;
+            try {
+                audioContext ||= new (window.AudioContext || window.webkitAudioContext)();
+                const osc = audioContext.createOscillator();
+                const gain = audioContext.createGain();
+                osc.type = type; osc.frequency.value = freq;
+                gain.gain.setValueAtTime(0.055, audioContext.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + duration);
+                osc.connect(gain); gain.connect(audioContext.destination);
+                osc.start(); osc.stop(audioContext.currentTime + duration);
+            } catch(e) {}
+        }
+        function getBallColors(pileIndex){
+            const skin=skins.find(s=>s.id===equippedSkin)||skins[0];
+            return skin.colors[pileIndex] || skins[0].colors[pileIndex];
+        }
+        const originalDrawPileCanvas = drawPileCanvas;
+        drawPileCanvas = function(ctx, pileIndex, baseColor) {
+            ctx.clearRect(0, 0, 220, 240);
+            const totalItems = piles[pileIndex];
+            let currentBallIndex = 0, rowCapacity = 1, rowY = 35, radius = 18;
+            const colors=getBallColors(pileIndex);
+            while (currentBallIndex < totalItems) {
+                const rowCount = Math.min(rowCapacity, totalItems - currentBallIndex);
+                const rowWidth = rowCount * (radius * 2 + 10) - 10;
+                const startX = (220 - rowWidth) / 2 + radius;
+                for (let r = 0; r < rowCount; r++) {
+                    const ballIndex = currentBallIndex++;
+                    const cx = startX + r * (radius * 2 + 10), cy = rowY;
+                    ballCoordsMap[pileIndex].push({x:cx,y:cy,radius:radius,ballIndex});
+                    const selected = selectedPile === pileIndex && ballIndex >= piles[pileIndex] - selectedAmount;
+                    const pulse = selected ? 1 + Math.sin(performance.now()/125)*.055 : 1;
+                    const rr = radius * pulse;
+                    ctx.save();ctx.shadowColor="rgba(0,0,0,.42)";ctx.shadowBlur=9;ctx.shadowOffsetY=7;
+                    const grad=ctx.createRadialGradient(cx-7,cy-8,2,cx,cy,rr);
+                    grad.addColorStop(0,colors[0]);grad.addColorStop(.65,colors[1]);grad.addColorStop(1,colors[2]);
+                    ctx.beginPath();ctx.arc(cx,cy,rr,0,Math.PI*2);ctx.fillStyle=grad;ctx.fill();
+                    ctx.shadowColor="transparent";ctx.beginPath();ctx.ellipse(cx-6,cy-8,5,3.3,-.5,0,Math.PI*2);ctx.fillStyle="rgba(255,255,255,.78)";ctx.fill();
+                    ctx.beginPath();ctx.arc(cx,cy,rr-1,0,Math.PI*2);ctx.strokeStyle="rgba(255,255,255,.22)";ctx.lineWidth=1.3;ctx.stroke();
+                    if(selected){ctx.beginPath();ctx.arc(cx,cy,rr+4,0,Math.PI*2);ctx.strokeStyle="#fff";ctx.lineWidth=3;ctx.shadowColor="#fff";ctx.shadowBlur=12;ctx.stroke();}
+                    ctx.restore();
+                }
+                rowY+=45;rowCapacity++;
+            }
+        };
+
+        const baseConfirmMove = confirmMove;
+        confirmMove = function() {
+            if (selectedPile === -1 || piles[selectedPile] === 0 || isAnimating) return;
+            playTone(520, .09, "triangle");
+            const pile = selectedPile, amount = selectedAmount;
+            isAnimating = true;
+            document.getElementById("actionBtn").disabled = true;
+            document.getElementById("statusLabel").innerText = "Nice move. Clearing the pile...";
+            const canvas = document.querySelectorAll(".board-canvas")[pile];
+            const ctx = canvas && canvas.getContext("2d");
+            const start = performance.now(), duration = 430;
+            const oldCount = piles[pile];
+            function burst(now) {
+                const t = Math.min(1,(now-start)/duration);
+                if(ctx) {
+                    ctx.clearRect(0,0,220,240);
+                    let idx=0, cap=1, y=35, rad=18;
+                    while(idx<oldCount){
+                        const n=Math.min(cap,oldCount-idx), w=n*(rad*2+10)-10, sx=(220-w)/2+rad;
+                        for(let r=0;r<n;r++){
+                            const bi=idx++, x=sx+r*(rad*2+10);
+                            if(bi>=oldCount-amount){
+                                const alpha=1-t, scale=1-t*.85;
+                                ctx.save();ctx.globalAlpha=alpha;ctx.translate(x,y);ctx.scale(scale,scale);
+                                const palette=getBallColors(pile);
+                                const g=ctx.createRadialGradient(-6,-7,2,0,0,18);
+                                g.addColorStop(0,palette[0]);g.addColorStop(.6,palette[1]);g.addColorStop(1,palette[2]);
+                                ctx.beginPath();ctx.arc(0,0,18,0,Math.PI*2);ctx.fillStyle=g;ctx.fill();
+                                ctx.restore();
+                            } else {
+                                ctx.save();ctx.translate(x,y);ctx.shadowColor="#0007";ctx.shadowBlur=8;ctx.shadowOffsetY=5;
+                                const palette=getBallColors(pile);
+                                const g=ctx.createRadialGradient(-6,-7,2,0,0,18);
+                                g.addColorStop(0,palette[0]);g.addColorStop(.6,palette[1]);g.addColorStop(1,palette[2]);
+                                ctx.beginPath();ctx.arc(0,0,18,0,Math.PI*2);ctx.fillStyle=g;ctx.fill();ctx.restore();
+                            }
+                        }
+                        y+=45;cap++;
+                    }
+                }
+                if(t<1) requestAnimationFrame(burst);
+                else {
+                    piles[pile]-=amount;selectedPile=-1;selectedAmount=1;renderBoard();
+                    if(checkRoundOver(true)) return;
+                    playerTurn=false;
+                    document.getElementById("statusLabel").innerText="The opponent is planning a move...";
+                    document.getElementById("turnChip").innerText="● CPU THINKING";
+                    document.getElementById("turnChip").style.background="#3a315c";
+                    document.getElementById("turnChip").style.color="#c4a8ff";
+                    document.getElementById("actionBtn").innerText="OPPONENT TURN";
+                    setTimeout(executeComputerTurn,850);
+                }
+            }
+            requestAnimationFrame(burst);
+        };
+        const baseExecuteComputerTurn = executeComputerTurn;
+        executeComputerTurn = function() {
+            const before = piles.slice();
+            baseExecuteComputerTurn();
+            const changed = before.findIndex((v,i)=>v!==piles[i]);
+            if(changed>=0) playTone(330,.13,"sine");
+        };
+
+        window.onload = () => { initSetup(); updateCoinDisplay(); };
+    </script>
+</body>
+</html>
